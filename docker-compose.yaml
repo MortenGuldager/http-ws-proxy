@@ -1,0 +1,31 @@
+services:
+  proxy:
+    build: .
+    container_name: proxy
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      
+      # HTTP POST on /push
+      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__proxy-http.loadbalancer.server.port=8080"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-http.rule=Host(`px.example.com`) && PathPrefix(`/push`)"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-http.service=__${COMPOSE_PROJECT_NAME}__proxy-http"
+
+      # WebSocket on /ws
+      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__proxy-ws.loadbalancer.server.port=8081"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-ws.rule=Host(`px.example.com`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-ws.service=__${COMPOSE_PROJECT_NAME}__proxy-ws"
+
+    networks:
+      - traefik
+
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "5"
+        max-size: "1m"
+
+
+networks:
+  traefik:
+    external: true
