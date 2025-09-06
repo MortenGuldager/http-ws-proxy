@@ -24,7 +24,7 @@ wss.on("connection", (ws, req) => {
 
     ws.on("close", () => {
         clients.delete(secret);
-        console.log("WS disconnected:", secret);
+        console.log("WS disconnected");
     });
 });
 
@@ -36,12 +36,17 @@ app.post("/push", (req, res) => {
 
     const ws = clients.get(secret);
 
+    const RESPONSE_MODE = process.env.RESPONSE_MODE || "camouflage";
+
     if (ws && ws.readyState === ws.OPEN) {
         ws.send(JSON.stringify(data));
-        res.json({ ok: true });
-    } else {
+    } 
+    else if (RESPONSE_MODE === "show_detailed_status") {
         res.status(404).json({ error: "No active WS for secret" });
+        return;
     }
+    
+    res.json({ ok: true });
 });
 
 app.listen(8080, () => {

@@ -3,18 +3,27 @@ services:
     build: .
     container_name: proxy
     restart: unless-stopped
+
     labels:
       - "traefik.enable=true"
       
       # HTTP POST on /push
-      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__proxy-http.loadbalancer.server.port=8080"
-      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-http.rule=Host(`px.example.com`) && PathPrefix(`/push`)"
-      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-http.service=__${COMPOSE_PROJECT_NAME}__proxy-http"
+      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__http.loadbalancer.server.port=8080"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__http.rule=Host(`$FQDN`) && PathPrefix(`/push`)"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__http.service=__${COMPOSE_PROJECT_NAME}__http"
+
+      # ip access control for the /http, comment the following two to allow everybody
+      - "traefik.http.middlewares.__${COMPOSE_PROJECT_NAME}__http-whitelist.ipAllowlist.sourcerange=${HTTP_WHITELIST:-0.0.0.0/0}"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__http.middlewares=__${COMPOSE_PROJECT_NAME}__http-whitelist"
 
       # WebSocket on /ws
-      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__proxy-ws.loadbalancer.server.port=8081"
-      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-ws.rule=Host(`px.example.com`) && PathPrefix(`/ws`)"
-      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__proxy-ws.service=__${COMPOSE_PROJECT_NAME}__proxy-ws"
+      - "traefik.http.services.__${COMPOSE_PROJECT_NAME}__ws.loadbalancer.server.port=8081"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__ws.rule=Host(`$FQDN`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__ws.service=__${COMPOSE_PROJECT_NAME}__ws"
+
+      # ip access control for the /ws, comment the following two to allow everybody
+      - "traefik.http.middlewares.__${COMPOSE_PROJECT_NAME}__ws-whitelist.ipAllowlist.sourcerange=${WS_WHITELIST:-0.0.0.0/0}"
+      - "traefik.http.routers.__${COMPOSE_PROJECT_NAME}__ws.middlewares=__${COMPOSE_PROJECT_NAME}__ws-whitelist"  
 
     networks:
       - traefik
@@ -24,7 +33,6 @@ services:
       options:
         max-file: "5"
         max-size: "1m"
-
 
 networks:
   traefik:
